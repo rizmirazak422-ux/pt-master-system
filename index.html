@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PT System Pro</title>
+<title>PT Calendar System</title>
 
 <style>
 body {
@@ -11,55 +11,20 @@ body {
   background: #f4f6f8;
 }
 
-/* APP LAYOUT */
-.app {
-  display: flex;
-  height: 100vh;
-}
-
-/* SIDEBAR */
-.sidebar {
-  width: 250px;
-  background: #0f172a;
+header {
+  background: #111827;
   color: white;
-  padding: 15px;
+  padding: 12px;
+  text-align: center;
+  font-weight: 600;
 }
 
-.sidebar h2 {
-  font-size: 16px;
-}
-
-.sidebar button {
-  width: 100%;
-  margin-top: 10px;
+/* LAYOUT */
+.container {
   padding: 10px;
-  border: none;
-  background: #1e293b;
-  color: white;
-  border-radius: 8px;
-  cursor: pointer;
 }
 
-/* MAIN */
-.main {
-  flex: 1;
-  padding: 15px;
-  overflow: auto;
-}
-
-/* MONTH HEADER */
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.header button {
-  padding: 8px 12px;
-}
-
-/* CALENDAR GRID */
+/* CALENDAR */
 .calendar {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -68,10 +33,9 @@ body {
 
 .day {
   background: white;
-  min-height: 90px;
-  padding: 6px;
+  min-height: 80px;
   border-radius: 10px;
-  font-size: 11px;
+  padding: 6px;
   cursor: pointer;
   border: 1px solid #eee;
 }
@@ -82,20 +46,15 @@ body {
 
 .date {
   font-weight: bold;
+  font-size: 12px;
 }
 
 .session {
+  font-size: 10px;
   background: #dbeafe;
   margin-top: 3px;
-  font-size: 10px;
   padding: 2px;
   border-radius: 6px;
-  cursor: grab;
-}
-
-/* MOBILE */
-@media(max-width: 768px) {
-  .sidebar { display: none; }
 }
 
 /* MODAL */
@@ -117,7 +76,9 @@ body {
 input, select, button {
   width: 100%;
   padding: 10px;
-  margin-top: 6px;
+  margin-top: 8px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
 }
 
 button {
@@ -125,42 +86,39 @@ button {
   color: white;
   border: none;
 }
+
+button.close {
+  background: #dc2626;
+}
+
+/* CLIENT BAR */
+.client-bar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.client-bar input {
+  flex: 1;
+}
 </style>
 
 </head>
 
 <body>
 
-<div class="app">
+<header>🏋️ PT Calendar System (Clean v7)</header>
 
-<!-- SIDEBAR -->
-<div class="sidebar">
-  <h2>PT MASTER PRO</h2>
+<div class="container">
 
-  <button onclick="changeView('calendar')">Calendar</button>
-  <button onclick="changeView('clients')">Clients</button>
-  <button onclick="changeView('progress')">Progress</button>
-
-  <hr>
-
+<!-- CLIENT ADD -->
+<div class="client-bar">
   <input id="clientName" placeholder="Add client">
   <button onclick="addClient()">Add</button>
-
-  <div id="clientList"></div>
 </div>
 
-<!-- MAIN -->
-<div class="main">
-
-<div class="header">
-  <button onclick="prevMonth()">⬅</button>
-  <h3 id="monthTitle"></h3>
-  <button onclick="nextMonth()">➡</button>
-</div>
-
+<!-- CALENDAR -->
 <div class="calendar" id="calendar"></div>
-
-</div>
 
 </div>
 
@@ -171,13 +129,12 @@ button {
     <h3 id="selectedDate"></h3>
 
     <select id="clientSelect"></select>
-    <input id="workout" placeholder="Workout / Notes">
+    <input id="notes" placeholder="Workout / Notes">
 
     <button onclick="saveSession()">Save</button>
+    <button class="close" onclick="closeModal()">Close</button>
 
     <div id="sessionList"></div>
-
-    <button onclick="closeModal()" style="background:red;margin-top:10px;">Close</button>
 
   </div>
 </div>
@@ -187,7 +144,6 @@ button {
 let clients = JSON.parse(localStorage.getItem("clients")) || [];
 let sessions = JSON.parse(localStorage.getItem("sessions")) || [];
 
-let current = new Date();
 let selectedDate = null;
 
 /* SAVE */
@@ -202,18 +158,8 @@ function addClient() {
   let name = document.getElementById("clientName").value;
   if (!name) return;
   clients.push({ name });
+  document.getElementById("clientName").value = "";
   save();
-}
-
-/* MONTH NAV */
-function nextMonth() {
-  current.setMonth(current.getMonth() + 1);
-  render();
-}
-
-function prevMonth() {
-  current.setMonth(current.getMonth() - 1);
-  render();
 }
 
 /* OPEN DAY */
@@ -221,32 +167,44 @@ function openDay(date) {
   selectedDate = date;
   document.getElementById("modal").style.display = "block";
   document.getElementById("selectedDate").innerText = date;
-  renderSessions();
+
+  renderModal();
 }
 
-/* SESSION */
+/* SAVE SESSION */
 function saveSession() {
   let client = document.getElementById("clientSelect").value;
-  let workout = document.getElementById("workout").value;
+  let notes = document.getElementById("notes").value;
 
-  sessions.push({ date: selectedDate, client, workout });
+  if (!client) return;
+
+  sessions.push({
+    date: selectedDate,
+    client,
+    notes
+  });
+
+  document.getElementById("notes").value = "";
+
   save();
+  renderModal();
 }
 
-function deleteSession(i) {
-  sessions.splice(i, 1);
-  save();
+/* CLOSE */
+function closeModal() {
+  document.getElementById("modal").style.display = "none";
 }
 
-function renderSessions() {
+/* MODAL CONTENT */
+function renderModal() {
+
   let html = "";
 
   sessions.forEach((s,i) => {
     if (s.date === selectedDate) {
       html += `
         <div>
-          <b>${s.client}</b> - ${s.workout}
-          <button onclick="deleteSession(${i})">X</button>
+          <b>${s.client}</b> - ${s.notes}
         </div>
       `;
     }
@@ -258,20 +216,17 @@ function renderSessions() {
     clients.map(c => `<option>${c.name}</option>`).join("");
 }
 
-/* CALENDAR (FULL MONTH 31 DAYS STYLE) */
+/* CALENDAR */
 function renderCalendar() {
 
-  let year = current.getFullYear();
-  let month = current.getMonth();
-
-  let daysInMonth = new Date(year, month+1, 0).getDate();
-
-  document.getElementById("monthTitle").innerText =
-    current.toLocaleString('default', { month: 'long' }) + " " + year;
+  let today = new Date();
+  let year = today.getFullYear();
+  let month = today.getMonth();
+  let days = new Date(year, month+1, 0).getDate();
 
   let html = "";
 
-  for (let i = 1; i <= daysInMonth; i++) {
+  for (let i = 1; i <= days; i++) {
 
     let dateStr = `${year}-${month+1}-${i}`;
 
@@ -282,11 +237,7 @@ function renderCalendar() {
         <div class="date">${i}</div>
 
         ${daySessions.slice(0,2).map(s =>
-          `<div class="session"
-            draggable="true"
-            ondragstart="dragStart('${s.date}', '${s.client}', '${s.workout}')">
-            ${s.client}
-          </div>`
+          `<div class="session">${s.client}</div>`
         ).join("")}
 
       </div>
@@ -296,35 +247,7 @@ function renderCalendar() {
   document.getElementById("calendar").innerHTML = html;
 }
 
-/* DRAG (SIMPLE VERSION) */
-let dragData = null;
-
-function dragStart(date, client, workout) {
-  dragData = { date, client, workout };
-}
-
-/* DROP INTO DAY */
-document.addEventListener("dragover", e => e.preventDefault());
-
-document.addEventListener("drop", e => {
-  if (!dragData) return;
-
-  let target = e.target.closest(".day");
-  if (!target) return;
-
-  let newDate = target.getAttribute("onclick").match(/'(.*?)'/)[1];
-
-  sessions.push({
-    date: newDate,
-    client: dragData.client,
-    workout: dragData.workout
-  });
-
-  save();
-  dragData = null;
-});
-
-/* PROGRESS (simple future-ready) */
+/* INIT */
 function render() {
   renderCalendar();
 }
