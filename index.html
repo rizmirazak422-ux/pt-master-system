@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>PT System</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    input, button { padding: 8px; margin: 5px; }
+    .card { border: 1px solid #ccc; padding: 10px; margin-top: 10px; }
+  </style>
+</head>
+
+<body>
+
+<h1>PT Simple System</h1>
+
+<h2>Add Client</h2>
+<input id="name" placeholder="Client name">
+<button onclick="addClient()">Add</button>
+
+<h2>Clients</h2>
+<div id="clientList"></div>
+
+<script>
+let clients = JSON.parse(localStorage.getItem("clients")) || [];
+
+function save() {
+  localStorage.setItem("clients", JSON.stringify(clients));
+  render();
+}
+
+function addClient() {
+  let name = document.getElementById("name").value;
+  if (!name) return;
+
+  clients.push({ name });
+  document.getElementById("name").value = "";
+  save();
+}
+
+function deleteClient(index) {
+  clients.splice(index, 1);
+  save();
+}
+
+function render() {
+  let html = "";
+  clients.forEach((c, i) => {
+    html += `
+      <div class="card">
+        ${c.name}
+        <button onclick="deleteClient(${i})">Delete</button>
+      </div>
+    `;
+  });
+
+  document.getElementById("clientList").innerHTML = html;
+}
+
+render();
+</script>
+
+</body>
+</html>
